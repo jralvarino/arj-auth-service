@@ -26038,13 +26038,13 @@ var require_CommonError = __commonJS({
       }
     };
     exports2.BadRequestError = BadRequestError;
-    var UnauthorizedError = class extends CommonError {
+    var UnauthorizedError2 = class extends CommonError {
       constructor(message = "Unauthorized", details) {
         super(message, 401, "UNAUTHORIZED", details);
         this.name = "UnauthorizedError";
       }
     };
-    exports2.UnauthorizedError = UnauthorizedError;
+    exports2.UnauthorizedError = UnauthorizedError2;
     var ForbiddenError = class extends CommonError {
       constructor(message = "Access denied", details) {
         super(message, 403, "FORBIDDEN", details);
@@ -30025,6 +30025,31 @@ var require_jsonwebtoken = __commonJS({
       NotBeforeError: require_NotBeforeError(),
       TokenExpiredError: require_TokenExpiredError()
     };
+  }
+});
+
+// node_modules/@arj/common-utils-layer/dist/error/index.js
+var require_error = __commonJS({
+  "node_modules/@arj/common-utils-layer/dist/error/index.js"(exports2) {
+    "use strict";
+    var __createBinding = exports2 && exports2.__createBinding || (Object.create ? (function(o, m, k, k2) {
+      if (k2 === void 0) k2 = k;
+      var desc = Object.getOwnPropertyDescriptor(m, k);
+      if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+        desc = { enumerable: true, get: function() {
+          return m[k];
+        } };
+      }
+      Object.defineProperty(o, k2, desc);
+    }) : (function(o, m, k, k2) {
+      if (k2 === void 0) k2 = k;
+      o[k2] = m[k];
+    }));
+    var __exportStar = exports2 && exports2.__exportStar || function(m, exports3) {
+      for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports3, p)) __createBinding(exports3, m, p);
+    };
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    __exportStar(require_CommonError(), exports2);
   }
 });
 
@@ -47300,6 +47325,7 @@ config(en_default());
 // src/services/auth/auth.service.ts
 var import_bcryptjs = __toESM(require_bcryptjs(), 1);
 var import_jsonwebtoken = __toESM(require_jsonwebtoken(), 1);
+var import_error = __toESM(require_error(), 1);
 
 // src/repositories/user/user.repository.ts
 var import_db = __toESM(require_db(), 1);
@@ -47366,12 +47392,10 @@ var TOKEN_TTL_SECONDS = 7 * 24 * 60 * 60;
 var authService = {
   async login(email3, password) {
     const user = await userRepository.findByEmail(email3);
-    const invalidCredentialsError = Object.assign(new Error("Credenciais inv\xE1lidas."), {
-      statusCode: 401
-    });
-    if (!user) throw invalidCredentialsError;
+    const invalidCredentials = () => new import_error.UnauthorizedError("Credenciais inv\xE1lidas.");
+    if (!user) throw invalidCredentials();
     const passwordMatch = await import_bcryptjs.default.compare(password, user.passwordHash);
-    if (!passwordMatch) throw invalidCredentialsError;
+    if (!passwordMatch) throw invalidCredentials();
     const secret = await resolveJwtSecret();
     const now = Math.floor(Date.now() / 1e3);
     const payload = {

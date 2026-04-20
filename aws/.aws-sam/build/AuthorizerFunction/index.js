@@ -5713,6 +5713,118 @@ var require_jsonwebtoken = __commonJS({
   }
 });
 
+// node_modules/@arj/common-utils-layer/dist/error/CommonError.js
+var require_CommonError = __commonJS({
+  "node_modules/@arj/common-utils-layer/dist/error/CommonError.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.InternalServerError = exports2.ValidationError = exports2.ConflictError = exports2.NotFoundError = exports2.ForbiddenError = exports2.UnauthorizedError = exports2.BadRequestError = exports2.CommonError = void 0;
+    var CommonError = class extends Error {
+      statusCode;
+      errorType;
+      details;
+      constructor(message, statusCode = 500, errorType, details) {
+        super(message);
+        this.name = "AppError";
+        this.statusCode = statusCode;
+        this.errorType = errorType || this.getDefaultErrorType(statusCode);
+        this.details = details;
+        Error.captureStackTrace(this, this.constructor);
+      }
+      getDefaultErrorType(statusCode) {
+        const errorTypeMap = {
+          400: "BAD_REQUEST",
+          401: "UNAUTHORIZED",
+          403: "FORBIDDEN",
+          404: "NOT_FOUND",
+          409: "CONFLICT",
+          422: "UNPROCESSABLE_ENTITY",
+          429: "TOO_MANY_REQUESTS",
+          500: "INTERNAL_SERVER_ERROR",
+          502: "BAD_GATEWAY",
+          503: "SERVICE_UNAVAILABLE"
+        };
+        return errorTypeMap[statusCode] || "INTERNAL_SERVER_ERROR";
+      }
+    };
+    exports2.CommonError = CommonError;
+    var BadRequestError = class extends CommonError {
+      constructor(message, details) {
+        super(message, 400, "BAD_REQUEST", details);
+        this.name = "BadRequestError";
+      }
+    };
+    exports2.BadRequestError = BadRequestError;
+    var UnauthorizedError2 = class extends CommonError {
+      constructor(message = "Unauthorized", details) {
+        super(message, 401, "UNAUTHORIZED", details);
+        this.name = "UnauthorizedError";
+      }
+    };
+    exports2.UnauthorizedError = UnauthorizedError2;
+    var ForbiddenError = class extends CommonError {
+      constructor(message = "Access denied", details) {
+        super(message, 403, "FORBIDDEN", details);
+        this.name = "ForbiddenError";
+      }
+    };
+    exports2.ForbiddenError = ForbiddenError;
+    var NotFoundError = class extends CommonError {
+      constructor(message = "Resource not found", details) {
+        super(message, 404, "NOT_FOUND", details);
+        this.name = "NotFoundError";
+      }
+    };
+    exports2.NotFoundError = NotFoundError;
+    var ConflictError = class extends CommonError {
+      constructor(message = "Conflict", details) {
+        super(message, 409, "CONFLICT", details);
+        this.name = "ConflictError";
+      }
+    };
+    exports2.ConflictError = ConflictError;
+    var ValidationError = class extends CommonError {
+      constructor(message = "Validation error", details) {
+        super(message, 400, "VALIDATION_ERROR", details);
+        this.name = "ValidationError";
+      }
+    };
+    exports2.ValidationError = ValidationError;
+    var InternalServerError = class extends CommonError {
+      constructor(message = "Internal server error", details) {
+        super(message, 500, "INTERNAL_SERVER_ERROR", details);
+        this.name = "InternalServerError";
+      }
+    };
+    exports2.InternalServerError = InternalServerError;
+  }
+});
+
+// node_modules/@arj/common-utils-layer/dist/error/index.js
+var require_error = __commonJS({
+  "node_modules/@arj/common-utils-layer/dist/error/index.js"(exports2) {
+    "use strict";
+    var __createBinding = exports2 && exports2.__createBinding || (Object.create ? (function(o, m, k, k2) {
+      if (k2 === void 0) k2 = k;
+      var desc = Object.getOwnPropertyDescriptor(m, k);
+      if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+        desc = { enumerable: true, get: function() {
+          return m[k];
+        } };
+      }
+      Object.defineProperty(o, k2, desc);
+    }) : (function(o, m, k, k2) {
+      if (k2 === void 0) k2 = k;
+      o[k2] = m[k];
+    }));
+    var __exportStar = exports2 && exports2.__exportStar || function(m, exports3) {
+      for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports3, p)) __createBinding(exports3, m, p);
+    };
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    __exportStar(require_CommonError(), exports2);
+  }
+});
+
 // node_modules/@arj/common-utils-layer/dist/db/dynamoClient.js
 var require_dynamoClient = __commonJS({
   "node_modules/@arj/common-utils-layer/dist/db/dynamoClient.js"(exports2) {
@@ -5780,6 +5892,7 @@ module.exports = __toCommonJS(index_exports);
 // src/services/auth/auth.service.ts
 var import_bcryptjs = __toESM(require_bcryptjs(), 1);
 var import_jsonwebtoken = __toESM(require_jsonwebtoken(), 1);
+var import_error = __toESM(require_error(), 1);
 
 // src/repositories/user/user.repository.ts
 var import_db = __toESM(require_db(), 1);
@@ -5846,12 +5959,10 @@ var TOKEN_TTL_SECONDS = 7 * 24 * 60 * 60;
 var authService = {
   async login(email, password) {
     const user = await userRepository.findByEmail(email);
-    const invalidCredentialsError = Object.assign(new Error("Credenciais inv\xE1lidas."), {
-      statusCode: 401
-    });
-    if (!user) throw invalidCredentialsError;
+    const invalidCredentials = () => new import_error.UnauthorizedError("Credenciais inv\xE1lidas.");
+    if (!user) throw invalidCredentials();
     const passwordMatch = await import_bcryptjs.default.compare(password, user.passwordHash);
-    if (!passwordMatch) throw invalidCredentialsError;
+    if (!passwordMatch) throw invalidCredentials();
     const secret = await resolveJwtSecret();
     const now = Math.floor(Date.now() / 1e3);
     const payload = {

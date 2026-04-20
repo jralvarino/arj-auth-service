@@ -201,12 +201,26 @@ Resources:
             Value: !GetAtt AuthorizerFunction.Arn
             Description: ARN of the shared Lambda Authorizer — referenced by other stacks
 
+    AuthFunctionArnParameter:
+        Type: AWS::SSM::Parameter
+        Properties:
+            Name: /arj-auth/auth-function-arn
+            Type: String
+            Value: !GetAtt AuthFunction.Arn
+            Description: ARN of the Auth Lambda (login endpoint) — referenced by other stacks
+
 Outputs:
     AuthorizerFunctionArn:
         Description: ARN of the Lambda Authorizer (reference this in other stacks)
         Value: !GetAtt AuthorizerFunction.Arn
         Export:
             Name: arj-auth-authorizer-arn
+
+    AuthFunctionArn:
+        Description: ARN of the Auth Lambda — login endpoint (reference this in other stacks)
+        Value: !GetAtt AuthFunction.Arn
+        Export:
+            Name: arj-auth-function-arn
 
     AuthApiUrl:
         Description: Auth API endpoint

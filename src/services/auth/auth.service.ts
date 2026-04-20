@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { UnauthorizedError } from '@arj/common-utils-layer/error';
 import { userRepository } from '../../repositories/user/user.repository.js';
 import { resolveJwtSecret } from './jwtSecret.js';
 
@@ -26,14 +27,12 @@ export const authService = {
     async login(email: string, password: string): Promise<LoginResult> {
         const user = await userRepository.findByEmail(email);
 
-        const invalidCredentialsError = Object.assign(new Error('Credenciais inválidas.'), {
-            statusCode: 401,
-        });
+        const invalidCredentials = () => new UnauthorizedError('Credenciais inválidas.');
 
-        if (!user) throw invalidCredentialsError;
+        if (!user) throw invalidCredentials();
 
         const passwordMatch = await bcrypt.compare(password, user.passwordHash);
-        if (!passwordMatch) throw invalidCredentialsError;
+        if (!passwordMatch) throw invalidCredentials();
 
         const secret = await resolveJwtSecret();
         const now = Math.floor(Date.now() / 1000);
