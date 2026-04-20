@@ -1,0 +1,76 @@
+openapi: 3.0.1
+info:
+    title: ARJ Auth Service API
+    version: '1.0'
+
+paths:
+    /auth/login:
+        options:
+            summary: CORS preflight
+            operationId: loginOptions
+            responses:
+                '200':
+                    description: CORS headers
+                    headers:
+                        Access-Control-Allow-Origin:
+                            schema: { type: string }
+                        Access-Control-Allow-Methods:
+                            schema: { type: string }
+                        Access-Control-Allow-Headers:
+                            schema: { type: string }
+            x-amazon-apigateway-integration:
+                type: mock
+                requestTemplates:
+                    application/json: '{"statusCode": 200}'
+                responses:
+                    default:
+                        statusCode: '200'
+                        responseParameters:
+                            method.response.header.Access-Control-Allow-Origin: '''*'''
+                            method.response.header.Access-Control-Allow-Methods: '''GET,POST,PUT,PATCH,DELETE,OPTIONS'''
+                            method.response.header.Access-Control-Allow-Headers: '''Content-Type,Authorization'''
+
+        post:
+            summary: Autenticar e obter JWT
+            operationId: login
+            security: []
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            required:
+                                - email
+                                - password
+                            properties:
+                                email:
+                                    type: string
+                                    format: email
+                                password:
+                                    type: string
+            responses:
+                '200':
+                    description: Token JWT emitido com sucesso
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    token:
+                                        type: string
+                                    user:
+                                        type: object
+                                        properties:
+                                            userId: { type: string }
+                                            name: { type: string }
+                                            avatar: { type: string }
+                '400':
+                    description: Dados inválidos
+                '401':
+                    description: Credenciais inválidas
+            x-amazon-apigateway-integration:
+                httpMethod: POST
+                type: aws_proxy
+                uri:
+                    Fn::Sub: 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AuthFunction.Arn}/invocations'

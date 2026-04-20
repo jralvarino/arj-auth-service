@@ -1,0 +1,42 @@
+{
+    "name": "@arj/auth-service",
+    "version": "0.0.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "build": "tsc",
+        "type-check": "tsc --noEmit",
+        "invoke:local": "cd aws && sam local invoke",
+        "deploy": "./aws/deploy.sh",
+        "add:user": "./aws/add-user.sh"
+    },
+    "dependencies": {
+        "@arj/common-utils-layer": "^1.0.4",
+        "@aws-lambda-powertools/logger": "^2.30.2",
+        "@aws-lambda-powertools/tracer": "^2.30.2",
+        "@aws-sdk/client-ssm": "^3.956.0",
+        "@aws-sdk/lib-dynamodb": "^3.956.0",
+        "@middy/core": "^7.0.0",
+        "@middy/http-error-handler": "^7.0.0",
+        "@middy/http-event-normalizer": "^7.0.0",
+        "@middy/http-json-body-parser": "^7.0.0",
+        "@middy/http-router": "^7.0.0",
+        "bcryptjs": "^2.4.3",
+        "jsonwebtoken": "^9.0.2",
+        "uuid": "latest",
+        "zod": "latest",
+        "eslint": "^8.57.0",
+        "eslint-config-prettier": "^9.1.0",
+        "eslint-plugin-prettier": "^5.1.3",
+        "prettier": "3.7.4"
+    },
+    "devDependencies": {
+        "@types/aws-lambda": "latest",
+        "@types/bcryptjs": "^2.4.6",
+        "@types/jsonwebtoken": "^9.0.9",
+        "@types/node": "latest",
+        "@types/uuid": "latest",
+        "esbuild": "latest",
+        "typescript": "latest"
+    }
+}

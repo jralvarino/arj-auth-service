@@ -1,0 +1,213 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Description: ARJ Auth Service — Lambda Authorizer + Login + DynamoDB user table
+
+Globals:
+    Function:
+        Runtime: nodejs22.x
+        Architectures:
+            - x86_64
+        Tracing: Active
+
+Parameters:
+    AppId:
+        Type: String
+        Default: financ
+        Description: App ID this authorizer deployment protects (injected into JWT apps claim check)
+    JwtSecretParameterName:
+        Type: String
+        Default: /planly/jwt
+        Description: SSM SecureString parameter name used as JWT secret
+
+Resources:
+    # ──────────────────────────────────────────────
+    # API Gateway
+    # ──────────────────────────────────────────────
+    AuthApi:
+        Type: AWS::Serverless::Api
+        Properties:
+            Name: arj-auth-api
+            StageName: prod
+            DefinitionBody:
+                Fn::Transform:
+                    Name: AWS::Include
+                    Parameters:
+                        Location: openapi.yaml
+
+    # ──────────────────────────────────────────────
+    # DynamoDB
+    # ──────────────────────────────────────────────
+    UserTable:
+        Type: AWS::DynamoDB::Table
+        Properties:
+            TableName: user
+            BillingMode: PAY_PER_REQUEST
+            AttributeDefinitions:
+                - AttributeName: userId
+                  AttributeType: S
+                - AttributeName: email
+                  AttributeType: S
+            KeySchema:
+                - AttributeName: userId
+                  KeyType: HASH
+            GlobalSecondaryIndexes:
+                - IndexName: email-index
+                  KeySchema:
+                      - AttributeName: email
+                        KeyType: HASH
+                  Projection:
+                      ProjectionType: ALL
+
+    # ──────────────────────────────────────────────
+    # IAM Roles
+    # ──────────────────────────────────────────────
+    AuthorizerLambdaRole:
+        Type: AWS::IAM::Role
+        Properties:
+            RoleName: arj-authorizer-lambda-role
+            AssumeRolePolicyDocument:
+                Version: '2012-10-17'
+                Statement:
+                    - Effect: Allow
+                      Principal:
+                          Service: lambda.amazonaws.com
+                      Action: sts:AssumeRole
+            ManagedPolicyArns:
+                - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+                - arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess
+            Policies:
+                - PolicyName: SSMAccess
+                  PolicyDocument:
+                      Version: '2012-10-17'
+                      Statement:
+                          - Effect: Allow
+                            Action: ssm:GetParameter
+                            Resource: !Sub
+                                - 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${JwtSecretParameterName}'
+                                - JwtSecretParameterName: !Ref JwtSecretParameterName
+
+    AuthLambdaRole:
+        Type: AWS::IAM::Role
+        Properties:
+            RoleName: arj-auth-lambda-role
+            AssumeRolePolicyDocument:
+                Version: '2012-10-17'
+                Statement:
+                    - Effect: Allow
+                      Principal:
+                          Service: lambda.amazonaws.com
+                      Action: sts:AssumeRole
+            ManagedPolicyArns:
+                - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+                - arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess
+            Policies:
+                - PolicyName: SSMAccess
+                  PolicyDocument:
+                      Version: '2012-10-17'
+                      Statement:
+                          - Effect: Allow
+                            Action: ssm:GetParameter
+                            Resource: !Sub
+                                - 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${JwtSecretParameterName}'
+                                - JwtSecretParameterName: !Ref JwtSecretParameterName
+                - PolicyName: DynamoDBAccess
+                  PolicyDocument:
+                      Version: '2012-10-17'
+                      Statement:
+                          - Effect: Allow
+                            Action:
+                                - dynamodb:GetItem
+                                - dynamodb:PutItem
+                                - dynamodb:Query
+                            Resource:
+                                - !GetAtt UserTable.Arn
+                                - !Sub '${UserTable.Arn}/index/email-index'
+
+    # ──────────────────────────────────────────────
+    # Lambda Functions
+    # ──────────────────────────────────────────────
+    AuthorizerFunction:
+        Type: AWS::Serverless::Function
+        Metadata:
+            BuildMethod: makefile
+        Properties:
+            FunctionName: arj-authorizer
+            CodeUri: ..
+            Handler: index.handler
+            Role: !GetAtt AuthorizerLambdaRole.Arn
+            Description: Token-based Lambda Authorizer — validates JWT and checks app membership
+            Environment:
+                Variables:
+                    APP_ID: !Ref AppId
+                    JWT_SECRET_PARAMETER_NAME: !Ref JwtSecretParameterName
+
+    AuthFunction:
+        Type: AWS::Serverless::Function
+        Metadata:
+            BuildMethod: makefile
+        Properties:
+            FunctionName: arj-auth
+            CodeUri: ..
+            Handler: index.handler
+            Role: !GetAtt AuthLambdaRole.Arn
+            Description: Auth service — POST /auth/login returns JWT
+            Environment:
+                Variables:
+                    USER_TABLE_NAME: !Ref UserTable
+                    JWT_SECRET_PARAMETER_NAME: !Ref JwtSecretParameterName
+            Events:
+                LoginPost:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref AuthApi
+                        Path: /auth/login
+                        Method: POST
+
+    # ──────────────────────────────────────────────
+    # Lambda Permissions (API Gateway → Lambda)
+    # ──────────────────────────────────────────────
+    AuthFunctionPermission:
+        Type: AWS::Lambda::Permission
+        Properties:
+            Action: lambda:InvokeFunction
+            FunctionName: !GetAtt AuthFunction.Arn
+            Principal: apigateway.amazonaws.com
+            SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${AuthApi}/*/*'
+
+    # ──────────────────────────────────────────────
+    # CloudWatch Log Groups
+    # ──────────────────────────────────────────────
+    AuthorizerFunctionLogGroup:
+        Type: AWS::Logs::LogGroup
+        Properties:
+            LogGroupName: !Sub '/aws/lambda/${AuthorizerFunction}'
+            RetentionInDays: 3
+
+    AuthFunctionLogGroup:
+        Type: AWS::Logs::LogGroup
+        Properties:
+            LogGroupName: !Sub '/aws/lambda/${AuthFunction}'
+            RetentionInDays: 3
+
+    # ──────────────────────────────────────────────
+    # SSM — export authorizer ARN for other stacks
+    # ──────────────────────────────────────────────
+    AuthorizerFunctionArnParameter:
+        Type: AWS::SSM::Parameter
+        Properties:
+            Name: /arj-auth/authorizer-function-arn
+            Type: String
+            Value: !GetAtt AuthorizerFunction.Arn
+            Description: ARN of the shared Lambda Authorizer — referenced by other stacks
+
+Outputs:
+    AuthorizerFunctionArn:
+        Description: ARN of the Lambda Authorizer (reference this in other stacks)
+        Value: !GetAtt AuthorizerFunction.Arn
+        Export:
+            Name: arj-auth-authorizer-arn
+
+    AuthApiUrl:
+        Description: Auth API endpoint
+        Value: !Sub 'https://${AuthApi}.execute-api.${AWS::Region}.amazonaws.com/prod'
