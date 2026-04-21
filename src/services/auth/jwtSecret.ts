@@ -1,6 +1,6 @@
 import { GetParameterCommand, SSMClient } from '@aws-sdk/client-ssm';
 
-const ssmClient = new SSMClient({});
+const ssmClient = new SSMClient({ region: process.env.AWS_REGION ?? 'us-east-1' });
 let cachedSecret: string | null = null;
 
 export async function resolveJwtSecret(): Promise<string> {

@@ -135,6 +135,7 @@ Resources:
             FunctionName: arj-authorizer
             CodeUri: ..
             Handler: index.handler
+            Timeout: 10
             Role: !GetAtt AuthorizerLambdaRole.Arn
             Description: Token-based Lambda Authorizer — validates JWT and checks app membership
             Environment:
@@ -150,6 +151,7 @@ Resources:
             FunctionName: arj-auth
             CodeUri: ..
             Handler: index.handler
+            Timeout: 15
             Role: !GetAtt AuthLambdaRole.Arn
             Description: Auth service — POST /auth/login returns JWT
             Environment:

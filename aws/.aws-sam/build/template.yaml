@@ -123,6 +123,7 @@ Resources:
       FunctionName: arj-authorizer
       CodeUri: AuthorizerFunction
       Handler: index.handler
+      Timeout: 10
       Role:
         Fn::GetAtt:
         - AuthorizerLambdaRole
@@ -144,6 +145,7 @@ Resources:
       FunctionName: arj-auth
       CodeUri: AuthFunction
       Handler: index.handler
+      Timeout: 15
       Role:
         Fn::GetAtt:
         - AuthLambdaRole

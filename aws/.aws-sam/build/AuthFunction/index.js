@@ -47367,7 +47367,7 @@ var userRepository = {
 
 // src/services/auth/jwtSecret.ts
 var import_client_ssm = require("@aws-sdk/client-ssm");
-var ssmClient = new import_client_ssm.SSMClient({});
+var ssmClient = new import_client_ssm.SSMClient({ region: process.env.AWS_REGION ?? "us-east-1" });
 var cachedSecret = null;
 async function resolveJwtSecret() {
   const fromEnv = process.env.JWT_SECRET?.trim();
