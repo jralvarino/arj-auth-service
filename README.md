@@ -23,36 +23,24 @@ It provides:
 
 ```mermaid
 flowchart LR
-    C[Client / Frontend] -->|POST /auth/login| APIGW[API Gateway]
-    APIGW --> L[Login Lambda]
-    L --> CTRL[login.controller + Zod]
-    CTRL --> SVC[authService.login]
-    SVC --> DDB[(DynamoDB user table)]
-    SVC --> SEC[JWT secret resolver]
-    SEC --> ENV[JWT_SECRET env var]
-    SEC --> SSM[AWS SSM SecureString]
-    SVC --> JWT[Signed JWT HS256]
-    JWT --> C
+    U[User / Frontend] -->|1. Login| LOGIN[POST /auth/login]
+    LOGIN --> AUTH[Auth Service]
+    AUTH --> DB[(DynamoDB users)]
+    AUTH --> SECRET[JWT Secret<br/>Env or SSM]
+    AUTH -->|2. Returns JWT| U
 
-    C -->|Authorization: Bearer token| PAPI[Protected API]
-    PAPI --> AUTHZ[Shared Lambda Authorizer]
-    AUTHZ --> VT[authService.verifyToken]
-    VT --> DEC{apps includes APP_ID?}
-    DEC -->|Yes| ALLOW[Allow request]
-    DEC -->|No| DENY[Deny request]
+    U -->|3. Sends JWT| API[Other API]
+    API --> AUTHZ[Shared Authorizer]
+    AUTHZ -->|4. Valid token + app access| API
 ```
 
 ### Request flow
 
-1. Client calls `POST /auth/login` with `email` and `password`.
-2. `login` handler uses Middy middlewares (JSON parser, event normalization, CORS, logging, global exception handling).
-3. `login.controller` validates payload with Zod.
-4. `authService.login()`:
-   - Loads user by e-mail from DynamoDB.
-   - Compares password using `bcryptjs`.
-   - Loads JWT secret (first `JWT_SECRET`, then SSM parameter from `JWT_SECRET_PARAMETER_NAME`).
-   - Signs token with `HS256` and returns `{ token, user }`.
-5. Downstream APIs can use the shared authorizer Lambda to validate the token and enforce app-level access.
+1. User sends `email` + `password` to `POST /auth/login`.
+2. Service validates input and credentials in DynamoDB.
+3. Service signs a JWT (`HS256`) and returns `{ token, user }`.
+4. User sends this token to protected APIs.
+5. Shared authorizer validates the token and checks `APP_ID` access.
 
 ### Main components
 
