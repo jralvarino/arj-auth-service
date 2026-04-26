@@ -25,7 +25,7 @@ const TOKEN_TTL_SECONDS = 7 * 24 * 60 * 60;
 const userService = new UserService();
 
 export const authService = {
-    async login(email: string, password: string): Promise<LoginResult> {
+    async login(email: string, password: string, appId: string): Promise<LoginResult> {
         const user = await userService.findByEmail(email);
 
         const invalidCredentials = () => new UnauthorizedError("Invalid credentials.");
@@ -34,6 +34,8 @@ export const authService = {
 
         const passwordMatch = await bcrypt.compare(password, user.passwordHash);
         if (!passwordMatch) throw invalidCredentials();
+
+        if (!user.apps.includes(appId)) throw new UnauthorizedError("Access denied for this app.");
 
         const secret = await resolveJwtSecret();
         const now = Math.floor(Date.now() / 1000);
