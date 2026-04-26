@@ -19,6 +19,29 @@ It provides:
 
 ## How It Works
 
+### Architecture diagram
+
+```mermaid
+flowchart LR
+    C[Client / Frontend] -->|POST /auth/login| APIGW[API Gateway]
+    APIGW --> L[Login Lambda]
+    L --> CTRL[login.controller + Zod]
+    CTRL --> SVC[authService.login]
+    SVC --> DDB[(DynamoDB user table)]
+    SVC --> SEC[JWT secret resolver]
+    SEC --> ENV[JWT_SECRET env var]
+    SEC --> SSM[AWS SSM SecureString]
+    SVC --> JWT[Signed JWT HS256]
+    JWT --> C
+
+    C -->|Authorization: Bearer token| PAPI[Protected API]
+    PAPI --> AUTHZ[Shared Lambda Authorizer]
+    AUTHZ --> VT[authService.verifyToken]
+    VT --> DEC{apps includes APP_ID?}
+    DEC -->|Yes| ALLOW[Allow request]
+    DEC -->|No| DENY[Deny request]
+```
+
 ### Request flow
 
 1. Client calls `POST /auth/login` with `email` and `password`.
