@@ -6,7 +6,7 @@
     "scripts": {
         "build": "tsc",
         "type-check": "tsc --noEmit",
-        "test:unit": "npm run build && node --test test/**/*.test.mjs",
+        "test": "npm run build && node --test test/**/*.test.mjs",
         "invoke:local": "cd infrastructure/aws && sam local invoke",
         "deploy": "bash infrastructure/deployment/deploy.sh",
         "add:user": "./infrastructure/aws/add-user.sh",

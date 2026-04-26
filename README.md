@@ -145,7 +145,7 @@ npm run type-check
 Run unit tests:
 
 ```bash
-npm run test:unit
+npm run test
 ```
 
 Invoke local SAM function:
