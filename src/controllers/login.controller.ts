@@ -10,6 +10,7 @@ const loginSchema = z.object({
     body: z.object({
         email: z.string().email("E-mail inválido."),
         password: z.string().min(1, "Senha obrigatória."),
+        appId: z.string().min(1, "App ID obrigatório."),
     }),
 });
 
@@ -18,9 +19,9 @@ type LoginBody = z.infer<typeof loginSchema>["body"];
 const login = middy<APIGatewayProxyEvent, APIGatewayProxyResult>()
     .use(zodValidator(loginSchema))
     .handler(async (event) => {
-        const { email, password } = (event as APIGatewayProxyEvent & { validated: { body: LoginBody } }).validated.body;
+        const { email, password, appId } = (event as APIGatewayProxyEvent & { validated: { body: LoginBody } }).validated.body;
 
-        const result = await authService.login(email, password);
+        const result = await authService.login(email, password, appId);
         return success(result);
     });
 

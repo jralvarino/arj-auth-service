@@ -7,7 +7,7 @@ node_modules/
 # Build artifacts
 dist/
 build/
-aws/.aws-sam/
+aws/.aws-sam/*
 
 # Environment files
 .env
@@ -16,3 +16,4 @@ aws/.aws-sam/
 
 # OS
 .DS_Store
+infrastructure/aws/.aws-sam/build.toml
