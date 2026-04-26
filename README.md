@@ -23,7 +23,7 @@ It provides:
 
 ```mermaid
 flowchart LR
-    U[User / Frontend] -->|1. Login| LOGIN[POST /auth/login]
+    U[User / Frontend] -->|1. Login + appId| LOGIN[POST /auth/login]
     LOGIN --> AUTH[Auth Service]
     AUTH --> DB[(DynamoDB users)]
     AUTH --> SECRET[JWT Secret<br/>Env or SSM]
