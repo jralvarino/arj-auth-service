@@ -36,7 +36,7 @@ flowchart LR
 
 ### Request flow
 
-1. User sends `email` + `password` to `POST /auth/login`.
+1. User sends `email`, `password`, and `appId` to `POST /auth/login`.
 2. Service validates input and credentials in DynamoDB.
 3. Service signs a JWT (`HS256`) and returns `{ token, user }`.
 4. User sends this token to protected APIs.
@@ -61,7 +61,8 @@ Request body:
 ```json
 {
   "email": "user@example.com",
-  "password": "your-password"
+  "password": "your-password",
+  "appId": "financ"
 }
 ```
 
