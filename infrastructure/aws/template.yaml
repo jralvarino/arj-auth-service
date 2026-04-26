@@ -132,7 +132,7 @@ Resources:
         Metadata:
             BuildMethod: makefile
         Properties:
-            FunctionName: arj-authorizer
+            FunctionName: authorizer
             CodeUri: ../..
             Handler: index.handler
             Timeout: 10
@@ -148,7 +148,7 @@ Resources:
         Metadata:
             BuildMethod: makefile
         Properties:
-            FunctionName: arj-login
+            FunctionName: login
             CodeUri: ../..
             Handler: index.handler
             Timeout: 15
