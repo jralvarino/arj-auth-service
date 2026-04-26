@@ -133,7 +133,7 @@ Resources:
             BuildMethod: makefile
         Properties:
             FunctionName: arj-authorizer
-            CodeUri: ..
+            CodeUri: ../..
             Handler: index.handler
             Timeout: 10
             Role: !GetAtt AuthorizerLambdaRole.Arn
@@ -148,8 +148,8 @@ Resources:
         Metadata:
             BuildMethod: makefile
         Properties:
-            FunctionName: arj-auth
-            CodeUri: ..
+            FunctionName: arj-login
+            CodeUri: ../..
             Handler: index.handler
             Timeout: 15
             Role: !GetAtt AuthLambdaRole.Arn
