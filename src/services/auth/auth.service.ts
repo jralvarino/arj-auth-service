@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { UnauthorizedError } from '@arj/common-utils-layer/error';
+import { UnauthorizedError } from '@arj/arj-common-utils/error';
 import { userRepository } from '../../repositories/user/user.repository.js';
 import { resolveJwtSecret } from './jwtSecret.js';
 

@@ -5,11 +5,11 @@ import middy from '@middy/core';
 import httpEventNormalizer from '@middy/http-event-normalizer';
 import jsonBodyParser from '@middy/http-json-body-parser';
 import httpRouterHandler from '@middy/http-router';
-import { createLogger } from '@arj/common-utils-layer/util';
+import { createLogger } from '@arj/arj-common-utils/util';
 import {
     globalExceptionHandler,
     requestLoggingMiddleware,
-} from '@arj/common-utils-layer/middleware';
+} from '@arj/arj-common-utils/middleware';
 import { routes } from '../../controllers/auth/auth.controller.js';
 import { corsMiddleware } from '../../middleware/cors.middleware.js';
 

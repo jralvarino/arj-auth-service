@@ -1,4 +1,4 @@
-import { ddb } from '@arj/common-utils-layer/db';
+import { ddb } from '@arj/arj-common-utils/db';
 import { GetCommand, PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { User } from '../../models/User.js';
 

@@ -5,9 +5,10 @@ set -euo pipefail
 #   ./deploy.sh [app_id]
 # Env overrides:
 #   AWS_REGION, AWS_PROFILE, STACK_NAME, APP_ID, JWT_SECRET_PARAMETER_NAME, SAM_S3_BUCKET
+#   CODEARTIFACT_DOMAIN, CODEARTIFACT_OWNER (obrigatório — AWS Account ID do domínio CodeArtifact)
 
 AWS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT_DIR="$(cd "${AWS_DIR}/.." && pwd)"
+ROOT_DIR="$(cd "${AWS_DIR}/../.." && pwd)"
 
 AWS_REGION="${AWS_REGION:-us-east-1}"
 AWS_PROFILE="${AWS_PROFILE:-}"
@@ -17,7 +18,7 @@ JWT_SECRET_PARAMETER_NAME="${JWT_SECRET_PARAMETER_NAME:-/planly/jwt}"
 SAM_S3_BUCKET="${SAM_S3_BUCKET:-}"
 
 CODEARTIFACT_DOMAIN="${CODEARTIFACT_DOMAIN:-arj}"
-CODEARTIFACT_OWNER="${CODEARTIFACT_OWNER:-679004717470}"
+CODEARTIFACT_OWNER="${CODEARTIFACT_OWNER:?'Defina CODEARTIFACT_OWNER com o AWS Account ID do domínio CodeArtifact'}"
 
 if ! command -v aws >/dev/null 2>&1; then
   echo "Erro: AWS CLI nao encontrado."
@@ -40,14 +41,12 @@ if [[ -n "${AWS_PROFILE}" ]]; then
 fi
 AWS_CMD+=(--region "${AWS_REGION}")
 
-echo "Obtendo token do CodeArtifact..."
-CODEARTIFACT_AUTH_TOKEN="$("${AWS_CMD[@]}" codeartifact get-authorization-token \
+echo "Configurando CodeArtifact..."
+"${AWS_CMD[@]}" codeartifact login \
+  --tool npm \
   --domain "${CODEARTIFACT_DOMAIN}" \
   --domain-owner "${CODEARTIFACT_OWNER}" \
-  --query authorizationToken \
-  --output text)"
-
-export CODEARTIFACT_AUTH_TOKEN
+  --repository common-utils-layer
 
 echo "Instalando dependencias..."
 cd "${ROOT_DIR}"

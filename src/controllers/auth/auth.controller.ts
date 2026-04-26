@@ -1,8 +1,8 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import middy from '@middy/core';
 import { Route } from '@middy/http-router';
-import { zodValidator } from '@arj/common-utils-layer/middleware';
-import { success } from '@arj/common-utils-layer/util';
+import { zodValidator } from '@arj/arj-common-utils/middleware';
+import { success } from '@arj/arj-common-utils/util';
 import { z } from 'zod';
 import { authService } from '../../services/auth/auth.service.js';
 

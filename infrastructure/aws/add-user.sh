@@ -60,7 +60,7 @@ if ! command -v node >/dev/null 2>&1; then
   exit 1
 fi
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../" && pwd)"
 cd "${ROOT_DIR}"
 
 AWS_CMD=(aws)
