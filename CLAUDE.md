@@ -1,39 +1,45 @@
 # CLAUDE.md — arj-auth-service
 
+## General Directives
+
+- **Language**: All content (code, comments, commit messages, documentation, script output) must be written in English.
+- **Public repository**: This is a public repository. Never hardcode sensitive data of any kind — AWS Account IDs, ARNs, tokens, secrets, passwords, internal URLs, or environment-specific values. All sensitive configuration must come from environment variables or AWS SSM/Secrets Manager.
+
 ## Security Directives
 
-### Informações sensíveis no repositório
+### No hardcoded sensitive data
 
-Este repositório contém informações sensíveis que **NÃO devem existir em um repositório público**. Ao trabalhar neste projeto, observe e corrija:
+This is a **public repository**. The following are strictly forbidden in any committed file:
 
-#### 1. AWS Account ID exposto
-- **Arquivo**: [infrastructure/aws/deploy.sh:20](infrastructure/aws/deploy.sh#L20) — `CODEARTIFACT_OWNER` com valor hardcoded `679004717470`
-- **Arquivo**: [.npmrc:3-5](.npmrc#L3) — ID da conta embutido na URL do CodeArtifact
-- **Ação**: O account ID deve ser parametrizado via variável de ambiente (`CODEARTIFACT_OWNER`) sem default hardcoded, ou movido para um arquivo `.env` ignorado pelo git.
+- AWS Account IDs, ARNs containing account IDs
+- API keys, auth tokens, or bearer tokens
+- Passwords or password hashes
+- Private keys or certificates
+- Internal domain names or URLs containing account/org identifiers
+- SSM parameter names or paths that reveal internal naming conventions
 
-#### 2. `node_modules/` rastreado pelo git
-- O diretório `node_modules/` está commitado no repositório. Isso expõe todas as dependências, aumenta desnecessariamente o tamanho do repo e pode ocultar pacotes maliciosos.
-- **Ação**: Adicionar `node_modules/` ao `.gitignore` e removê-lo do tracking com `git rm -r --cached node_modules/`.
+Secrets must come from environment variables or AWS SSM/Secrets Manager — see the established pattern in [src/services/login/jwtSecret.ts](src/services/login/jwtSecret.ts).
 
-#### 3. Artefatos de build rastreados (`infrastructure/aws/.aws-sam/build/`)
-- Arquivos compilados e source maps (`.js`, `.js.map`) gerados pelo SAM build estão commitados.
-- O `build.toml` contém caminhos absolutos do sistema local (`/Users/alvarino.ribeiro/...`).
-- **Ação**: Adicionar `infrastructure/aws/.aws-sam/` ao `.gitignore` e remover do tracking.
+### Known issues resolved
 
-#### 4. Ausência de `.gitignore`
-- O repositório não possui `.gitignore`, o que permite que arquivos sensíveis (`.env`, `node_modules`, builds) sejam commitados acidentalmente.
-- **Ação**: Criar `.gitignore` cobrindo pelo menos: `node_modules/`, `infrastructure/aws/.aws-sam/`, `*.env`, `*.env.local`, `dist/`, `build/`.
+The following sensitive data exposures were identified and fixed (2026-04-25):
 
-### Regras para novos códigos
+1. **AWS Account ID hardcoded** in `deploy.sh` and `.npmrc` — replaced with required env vars
+2. **`node_modules/` committed to git** — removed from tracking, added to `.gitignore`
+3. **SAM build artifacts committed** (`infrastructure/aws/.aws-sam/`) — removed from tracking, added to `.gitignore`
+4. **`.npmrc` committed** — contains CodeArtifact URLs; added to `.gitignore`, generated at runtime by deployment scripts
 
-- **Nunca** hardcode AWS Account IDs, ARNs com account ID, tokens, secrets ou senhas em arquivos fonte.
-- Segredos devem vir de variáveis de ambiente ou AWS SSM/Secrets Manager — padrão já usado em [src/services/auth/jwtSecret.ts](src/services/auth/jwtSecret.ts).
-- Antes de criar qualquer arquivo de configuração (`.npmrc`, `samconfig.toml`, etc.), verificar se ele pode conter dados sensíveis e garantir que está no `.gitignore`.
-- Arquivos de build e artefatos compilados nunca devem ser commitados.
+### Configuration files
 
-### Checklist antes de cada commit
+Before creating any config file (`.npmrc`, `samconfig.toml`, `.env`, etc.), verify it cannot contain sensitive data. If it can, add it to `.gitignore` before the first commit.
 
-- [ ] Nenhum secret, token ou chave hardcoded
-- [ ] `node_modules/` e `infrastructure/aws/.aws-sam/` não estão staged
-- [ ] Arquivos `.env*` não estão staged
-- [ ] `.gitignore` atualizado para novos artefatos gerados
+Build artifacts and compiled files must never be committed.
+
+## Pre-commit Checklist
+
+- [ ] No secrets, tokens, or keys hardcoded
+- [ ] No AWS Account IDs in any file
+- [ ] `node_modules/` and `infrastructure/aws/.aws-sam/` are not staged
+- [ ] `.env*` files are not staged
+- [ ] `.npmrc` is not staged
+- [ ] `.gitignore` updated for any new generated artifacts

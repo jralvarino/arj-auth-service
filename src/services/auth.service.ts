@@ -1,8 +1,8 @@
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import { UnauthorizedError } from '@arj/arj-common-utils/error';
-import { userRepository } from '../../repositories/user/user.repository.js';
-import { resolveJwtSecret } from './jwtSecret.js';
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { UnauthorizedError } from "@arj/arj-common-utils/error";
+import { UserService } from "@arj/arj-common-utils/service";
+import { resolveJwtSecret } from "./jwtSecret.js";
 
 export interface JwtPayload {
     sub: string;
@@ -22,12 +22,13 @@ export interface LoginResult {
 }
 
 const TOKEN_TTL_SECONDS = 7 * 24 * 60 * 60;
+const userService = new UserService();
 
 export const authService = {
     async login(email: string, password: string): Promise<LoginResult> {
-        const user = await userRepository.findByEmail(email);
+        const user = await userService.findByEmail(email);
 
-        const invalidCredentials = () => new UnauthorizedError('Credenciais inválidas.');
+        const invalidCredentials = () => new UnauthorizedError("Invalid credentials.");
 
         if (!user) throw invalidCredentials();
 
@@ -40,12 +41,12 @@ export const authService = {
         const payload = {
             sub: user.userId,
             apps: user.apps,
-            name: user.name ?? '',
+            name: user.name ?? "",
             iat: now,
             exp: now + TOKEN_TTL_SECONDS,
         };
 
-        const token = jwt.sign(payload, secret, { algorithm: 'HS256' });
+        const token = jwt.sign(payload, secret, { algorithm: "HS256" });
 
         return {
             token,
@@ -59,6 +60,6 @@ export const authService = {
 
     async verifyToken(token: string): Promise<JwtPayload> {
         const secret = await resolveJwtSecret();
-        return jwt.verify(token, secret, { algorithms: ['HS256'] }) as JwtPayload;
+        return jwt.verify(token, secret, { algorithms: ["HS256"] }) as JwtPayload;
     },
 };

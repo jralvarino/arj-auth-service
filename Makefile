@@ -1,5 +1,5 @@
 build-AuthFunction:
-	npx esbuild src/handlers/auth/index.ts \
+	npx esbuild src/handlers/login/index.ts \
 		--bundle \
 		--platform=node \
 		--target=node22 \
